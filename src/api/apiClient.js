@@ -1,92 +1,85 @@
 import axios from "axios";
 import store from "../redux/store";
-import { loginSuccess, logout } from "../redux/userAuthSlice";
+import { loginSuccess as adminLoginSuccess, logout as adminLogout } from "../redux/adminAuthSlice";
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
-const accessTokenKey = "userAccessToken";
-const refreshTokenKey = "userRefreshToken";
+const accessTokenKey = "adminAccessToken";
+const refreshTokenKey = "adminRefreshToken";
 
-const apiClient = axios.create({
-  baseURL: apiUrl,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+const createAdminApiClient = () => {
+  const api = axios.create({
+    baseURL: apiUrl,
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
+  // REQUEST INTERCEPTOR
+  api.interceptors.request.use(
+    (req) => {
+      const accessToken = localStorage.getItem(accessTokenKey);
+      if (accessToken) {
+        req.headers.Authorization = `Bearer ${accessToken}`;
+      }
+      return req;
+    },
+    (error) => Promise.reject(error)
+  );
 
-apiClient.interceptors.request.use(
-  (req) => {
-    const accessToken = localStorage.getItem(accessTokenKey);
+  // RESPONSE INTERCEPTOR
+  api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config;
+      if (!originalRequest) return Promise.reject(error);
 
-    if (accessToken) {
-      req.headers.Authorization = `Bearer ${accessToken}`;
-    }
+      // Handle 401 - Unauthorized
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+        try {
+          const refreshToken = localStorage.getItem(refreshTokenKey);
+          if (!refreshToken) throw new Error("Refresh token missing");
 
-    return req;
-  },
-  (error) => Promise.reject(error)
-);
+          const { data } = await axios.post(`${apiUrl}/admin/token/refresh`, { refreshToken });
+          const { accessToken, refreshToken: newRefreshToken } = data.message;
 
+          // Update localStorage
+          localStorage.setItem(accessTokenKey, accessToken);
+          localStorage.setItem(refreshTokenKey, newRefreshToken);
 
-apiClient.interceptors.response.use(
-  (response) => response,
+          // Update Redux state
+          store.dispatch(
+            adminLoginSuccess({
+              accessToken,
+              refreshToken: newRefreshToken,
+              isLoggedIn: true,
+            })
+          );
 
-  async (error) => {
-    const originalRequest = error.config;
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return api(originalRequest);
+        } catch (refreshError) {
+          store.dispatch(adminLogout({ isLoggedIn: false }));
+          localStorage.removeItem(accessTokenKey);
+          localStorage.removeItem(refreshTokenKey);
+          return Promise.reject(refreshError);
+        }
+      }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem(refreshTokenKey);
-
-        if (!refreshToken) throw new Error("Refresh token missing");
-
-        const { data } = await axios.post(
-          `${apiUrl}/user/token/refresh`,
-          { refreshToken }
-        );
-
-        const { accessToken, refreshToken: newRefreshToken } = data.message;
-
-        store.dispatch(
-          loginSuccess({
-            accessToken,
-            refreshToken: newRefreshToken,
-            isLoggedIn: true,
-          })
-        );
-
-        localStorage.setItem(accessTokenKey, accessToken);
-        localStorage.setItem(refreshTokenKey, newRefreshToken);
-
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-        return apiClient(originalRequest);
-
-      } catch (refreshError) {
-
-        store.dispatch(logout({ isLoggedIn: false }));
-
+      // Handle 403 - Forbidden
+      if (error.response?.status === 403) {
+        store.dispatch(adminLogout({ isLoggedIn: false }));
         localStorage.removeItem(accessTokenKey);
         localStorage.removeItem(refreshTokenKey);
-
-        return Promise.reject(refreshError);
       }
+
+      return Promise.reject(error);
     }
+  );
 
-    if (error.response?.status === 403) {
-      console.warn("User blocked. Logging out...");
+  return api;
+};
 
-      store.dispatch(logout({ isLoggedIn: false }));
-
-      localStorage.removeItem(accessTokenKey);
-      localStorage.removeItem(refreshTokenKey);
-    }
-
-    return Promise.reject(error);
-  }
-);
-
-export default apiClient;
+export default createAdminApiClient;
