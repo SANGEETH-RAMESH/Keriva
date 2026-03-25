@@ -1,0 +1,226 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Quote, Save, ArrowLeft, User, MapPin, MessageSquareQuote, Info, CheckCircle, XCircle, X } from "lucide-react";
+// Import your service
+import { createReview } from "../../../services/adminService";
+
+function Toast({ message, type = "success", onClose }) {
+  const config = {
+    success: { wrapper: "bg-white border border-emerald-200", icon: <CheckCircle size={15} className="text-emerald-500" />, text: "text-emerald-700" },
+    error: { wrapper: "bg-white border border-red-200", icon: <XCircle size={15} className="text-red-500" />, text: "text-red-700" },
+  };
+  const { wrapper, icon, text } = config[type];
+  return (
+    <div className="fixed bottom-6 right-6 z-[9999] animate-in slide-in-from-bottom-4 fade-in duration-300">
+      <div className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-lg ${wrapper}`}>
+        {icon} <p className={`text-sm font-semibold ${text}`}>{message}</p>
+        <button onClick={onClose} className="ml-1 text-gray-400 hover:text-gray-600"><X size={13} /></button>
+      </div>
+    </div>
+  );
+}
+
+export default function AddReview() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  const [formData, setFormData] = useState({
+    authorName: "",
+    quote: "",
+    authorCountry: "",
+    isActive: true
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+
+    // remove error when user starts typing
+    setErrors(prev => ({
+      ...prev,
+      [name]: ""
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {};
+
+    if (!formData.authorName.trim()) {
+      newErrors.authorName = "Author name is required";
+    }
+
+    if (!formData.authorCountry.trim()) {
+      newErrors.authorCountry = "Country is required";
+    }
+
+    if (!formData.quote.trim()) {
+      newErrors.quote = "Review cannot be empty";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+
+      setTimeout(() => {
+        setErrors({});
+      }, 5000);
+      return;
+    }
+
+    setErrors({});
+    setLoading(true);
+    try {
+      const response = await createReview(formData);
+      console.log(response.data, "Response");
+      const { message } = response.data;
+
+      if (message === 'Review Created') {
+        setToast({ message: "Review added successfully!", type: "success" });
+
+        setTimeout(() => navigate('/admin/review'), 1500);
+      } else {
+        setToast({ message: message || "Something went wrong", type: "error" });
+      }
+
+    } catch (error) {
+      console.error(error);
+      setToast({ message: "Failed to add review. Please try again.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fieldClass = "w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-green-400/30 focus:border-green-400 transition placeholder-gray-400";
+
+  return (
+    <div className="min-h-screen bg-green-50/30 pb-10">
+      <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-green-100 px-6 py-3.5 flex items-center justify-between shadow-sm shadow-green-50">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/admin/review')}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200 transition mr-1 cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200 flex items-center justify-center">
+            <Quote size={16} className="text-green-600" />
+          </div>
+          <div>
+            <h1 className="text-sm font-bold text-gray-800 leading-tight tracking-tight">Add New Review</h1>
+            <p className="text-xs text-gray-400 mt-0.5">Create a new client testimonial</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="p-6 max-w-3xl mx-auto">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-green-50 shadow-sm overflow-hidden">
+
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+            <h2 className="text-sm font-bold text-gray-800">Review Details</h2>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg">
+                <span className="text-xs font-semibold text-gray-600">Publish Immediately</span>
+                <input
+                  type="checkbox"
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="mx-5 mt-4 mb-2 flex items-start gap-2 bg-sky-50 border border-sky-100 rounded-xl px-3.5 py-2.5">
+            <Info size={13} className="text-sky-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-sky-700 leading-relaxed">
+              If <strong>Publish Immediately</strong> is checked, this review will instantly become visible on the public website.
+            </p>
+          </div>
+
+          <div className="p-5 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <User size={10} className="text-green-500" /> Author Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  name="authorName"
+                  value={formData.authorName}
+                  onChange={handleChange}
+                  className={fieldClass}
+                  placeholder="e.g. John Doe"
+                />
+                {errors.authorName && (
+                  <p className="text-xs text-red-500 mt-1">{errors.authorName}</p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  <MapPin size={10} className="text-green-500" /> Country <span className="text-red-400">*</span>
+                </label>
+                <input
+                  name="authorCountry"
+                  value={formData.authorCountry}
+                  onChange={handleChange}
+                  className={fieldClass}
+                  placeholder="e.g. United States"
+                />
+                {errors.authorCountry && (
+                  <p className="text-xs text-red-500 mt-1">{errors.authorCountry}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <MessageSquareQuote size={10} className="text-green-500" /> Review / Quote <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                name="quote"
+                value={formData.quote}
+                onChange={handleChange}
+                className={`${fieldClass} resize-none min-h-[120px]`}
+                placeholder="Write the customer's testimonial here..."
+              />
+              {errors.quote && (
+                <p className="text-xs text-red-500 mt-1">{errors.quote}</p>
+              )}
+              <p className="text-[10px] text-gray-400 pl-1">Keep it concise for better layout on the website.</p>
+            </div>
+          </div>
+
+          <div className="px-5 py-4 border-t border-gray-50 bg-gray-50/50 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/admin/review')}
+              className="px-5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-white transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center gap-2 px-6 py-2 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm shadow-green-200 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save size={15} />
+              )}
+              {loading ? "Saving..." : "Save Review"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+    </div>
+  );
+}

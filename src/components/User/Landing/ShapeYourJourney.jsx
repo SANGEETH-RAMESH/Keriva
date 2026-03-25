@@ -107,7 +107,6 @@ const MONTHS = [
 ];
 const DURATIONS = ["3–4 Days", "5–6 Days", "7–8 Days", "9–10 Days", "11–14 Days", "15+ Days"];
 
-// Inline error message component
 function FieldError({ message }) {
   if (!message) return null;
   return (
@@ -148,7 +147,6 @@ export default function ShapeYourJourney() {
       p.includes(label) ? p.filter((l) => l !== label) : [...p, label]
     );
 
-  // Clear error on field change
   const clearError = (field) => {
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
   };
@@ -297,7 +295,6 @@ export default function ShapeYourJourney() {
               <p className="syj-sub1">Every traveler carries a quiet version of Kerala in their mind.</p>
               <p className="syj-sub2">Tell us yours — we'll shape it with intention.</p>
 
-              {/* Dream */}
               <div className="syj-section">
                 <span className="syj-field-label">Describe your dream</span>
                 <textarea
@@ -313,7 +310,6 @@ export default function ShapeYourJourney() {
                 )}
               </div>
 
-              {/* Interests */}
               <div className="syj-section">
                 <span className="syj-field-label">What draws you?</span>
                 <div className={`syj-grid${errors.selected ? " has-error" : ""}`}>
@@ -335,7 +331,6 @@ export default function ShapeYourJourney() {
                 )}
               </div>
 
-              {/* Budget */}
               <div className="syj-section">
                 <span className="syj-field-label">How would you like to travel?</span>
                 <div className={`syj-pill-row${errors.budget ? " has-error" : ""}`}>
@@ -356,7 +351,6 @@ export default function ShapeYourJourney() {
                 )}
               </div>
 
-              {/* Month + Duration */}
               <div className="syj-section">
                 <div className="syj-two-col">
                   <div>
@@ -394,7 +388,6 @@ export default function ShapeYourJourney() {
                 </div>
               </div>
 
-              {/* Contact */}
               <div className="syj-section">
                 <span className="syj-field-label" style={{ fontWeight: 400, fontSize: 18 }}>
                   Where should we send your journey?

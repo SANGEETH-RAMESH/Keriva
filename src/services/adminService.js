@@ -87,4 +87,12 @@ export const editLanding = (id, data) => adminApi.patch(`/admin/landing/${id}`, 
 });
 
 export const searchExperiences = (query) =>
-  axios.get(`/api/experiences/search?q=${encodeURIComponent(query)}`);
+  adminApi.get(`/admin/experiences/search?q=${encodeURIComponent(query)}`);
+
+export const createReview = (data) => adminApi.post('/admin/review',data);
+
+export const getReviews = () => adminApi.get('/admin/review');
+
+export const getReviewById = (id) => adminApi.get(`/admin/review/${id}`);
+
+export const updateReview = (id,data) => adminApi.patch(`/admin/review/${id}`,data);

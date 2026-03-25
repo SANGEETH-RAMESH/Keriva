@@ -8,6 +8,9 @@ import Footer from "../common/Footer";
 import Navbar from "../common/Navbar";
 import BoardArca from "./JourneyTimeline";
 import ScrollVideoSection from "./Hero";
+import InfiniteMarquee from "./DistrictLoading";
+import ScrollSequence from "./ScrollSequence";
+
 
 const SECTIONS = [
   { id: "syj", bg: "#F7FE3D" },
@@ -37,7 +40,6 @@ export default function LandingPage() {
     const top = syjRef.current?.getBoundingClientRect().top + window.scrollY;
     window.scrollTo({ top, behavior: "smooth" });
   };
-
 
   useEffect(() => {
     const refs = [
@@ -83,17 +85,13 @@ export default function LandingPage() {
   return (
     <div style={{ margin: 0, padding: 0 }}>
       <Navbar onStartDesigning={scrollToForm} pastHero={pastHero} navBg={navBg} hidden={videoProgress > 0.05} />
-
-      {/* <div ref={heroRef}>
-        <KeralaLanding onStartDesigning={scrollToForm} />
-      </div> */}
-      {/* <div ref={heroRef} >
-        {/* <KeralaLanding onStartDesigning={scrollToForm} /> */}
-      {/* <BoardArca /> */}
-      {/* </div> */}
-      <div ref={heroRef}>
-        <BoardArca onScrollDown={scrollToNext} />
+      <div ref={syjRef}>
+        <ScrollSequence />
       </div>
+      {/* <div ref={heroRef}>
+        <BoardArca onScrollDown={scrollToNext} />
+      </div> */}
+
       <div style={{
         height: "150px",
         marginTop: "-150px",
@@ -102,18 +100,26 @@ export default function LandingPage() {
         zIndex: 20,
         pointerEvents: "none",
       }} />
+
       <div ref={syjRef}>
         <ShapeYourJourney />
       </div>
+
       <div ref={scrollVideoRef}>
         <ScrollVideoSection onProgressChange={setVideoProgress} />
       </div>
+
       <div ref={wcuRef}>
         <WhyChooseUs />
       </div>
+
+      {/* 2. INSERT THE MARQUEE HERE */}
+      {/* <InfiniteMarquee /> */}
+
       <div ref={wtsRef}>
         <WhatTravelersSay />
       </div>
+
       <div ref={footerRef} >
         <Footer />
       </div>

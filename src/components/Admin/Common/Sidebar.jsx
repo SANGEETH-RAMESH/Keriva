@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Inbox, Users, Settings, LogOut,
-  Menu, Plane, TrendingUp, X, Map, ChevronRight, Bell,
+  Menu, Plane, TrendingUp, X, Map, ChevronRight, Bell,LayoutTemplate, MessageSquareQuote
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/adminAuthSlice";
@@ -15,7 +15,8 @@ const NAV_ITEMS = [
   { icon: Map, label: "Journey", path: "/admin/journey" },
   { icon: TrendingUp, label: "Journal", path: "/admin/journal" },
   { icon: Settings, label: "Explore", path: "/admin/explore-kerala" },
-  { icon: Settings, label: "Landing", path: "/admin/landing" }
+  { icon: LayoutTemplate, label: "Landing", path: "/admin/landing" },
+   { icon: MessageSquareQuote, label: "Review", path: "/admin/review" }
 ];
 
 export default function AdminLayout() {

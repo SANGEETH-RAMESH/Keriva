@@ -1,121 +1,134 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
-import './Hero.css';
+import React, { useEffect, useState } from "react";
+import lighthouse from '../../../assets/lighthouse.png'
 
-const frameCount = 130;
-
-const currentFrame = (index) =>
-  new URL(
-    `../../../assets/images/ezgif-frame-${index.toString().padStart(3, '0')}.png`,
-    import.meta.url
-  ).href;
-
-const Hero = () => {
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const [images, setImages] = useState([]);
-
-  // FIX 3: define drawScaledImage before it's used in useEffect
-  const drawScaledImage = useCallback((ctx, img, width, height) => {
-    const hRatio = width / img.width;
-    const vRatio = height / img.height;
-    const ratio = Math.max(hRatio, vRatio);
-    const centerShift_x = (width - img.width * ratio) / 2;
-    const centerShift_y = (height - img.height * ratio) / 2;
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(
-      img,
-      0, 0, img.width, img.height,
-      centerShift_x, centerShift_y, img.width * ratio, img.height * ratio
-    );
-  }, []);
+export default function HeroAnimation() {
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    const loadedImages = [];
-    let loadedCount = 0;
+    // Automatically trigger the animation 800ms after the page loads
+    const timer = setTimeout(() => {
+      setIsAnimating(true);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
-    for (let i = 1; i <= frameCount; i++) {
-      const img = new Image();
-      img.src = currentFrame(i);
-      img.onload = () => {
-        loadedCount++;
-        if (i === 1 && canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            canvasRef.current.width = window.innerWidth;
-            canvasRef.current.height = window.innerHeight;
-            drawScaledImage(ctx, img, canvasRef.current.width, canvasRef.current.height);
-          }
-        }
-      };
-      loadedImages.push(img);
-    }
-    setImages(loadedImages);
-
-    const handleResize = () => {
-      if (canvasRef.current && loadedImages[0]?.complete) {
-        canvasRef.current.width = window.innerWidth;
-        canvasRef.current.height = window.innerHeight;
-        const ctx = canvasRef.current.getContext('2d');
-        if (ctx) drawScaledImage(ctx, loadedImages[0], canvasRef.current.width, canvasRef.current.height);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [drawScaledImage]);
-
-  // FIX 1: track scroll on the container, which now has overflow-y: scroll
-  const { scrollYProgress } = useScroll({ container: containerRef });
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (!canvasRef.current || images.length === 0) return;
-    const ctx = canvasRef.current.getContext('2d');
-    const frameIndex = Math.min(frameCount - 1, Math.max(0, Math.floor(latest * frameCount)));
-    const img = images[frameIndex];
-    if (img?.complete && ctx) {
-      drawScaledImage(ctx, img, canvasRef.current.width, canvasRef.current.height);
-    }
-  });
-
-  const opacity1 = useTransform(scrollYProgress, [0.05, 0.15, 0.25, 0.35], [0, 1, 1, 0]);
-  const y1 = useTransform(scrollYProgress, [0.05, 0.2, 0.35], [50, 0, -50]);
-
-  const opacity2 = useTransform(scrollYProgress, [0.4, 0.5, 0.6, 0.7], [0, 1, 1, 0]);
-  const y2 = useTransform(scrollYProgress, [0.4, 0.5, 0.7], [50, 0, -50]);
-
-  const opacity3 = useTransform(scrollYProgress, [0.75, 0.85, 0.95, 1], [0, 1, 1, 0]);
-  const y3 = useTransform(scrollYProgress, [0.75, 0.85, 1], [50, 0, -50]);
+  const handleReplay = () => {
+    setIsAnimating(false);
+    setTimeout(() => setIsAnimating(true), 100);
+  };
 
   return (
-    // FIX 1+2: container must have fixed height + overflow to scroll
-    <div ref={containerRef} className="hero-scroll-container">
+    <div className="relative w-full h-screen overflow-hidden bg-white font-sans">
       
-      {/* FIX 2: tall spacer creates scroll distance inside the container */}
-      <div style={{ height: '500vh' }} />
-
-      {/* Canvas stays fixed in view while user scrolls through spacer */}
-      <div className="hero-sticky-canvas">
-        <canvas ref={canvasRef} className="hero-canvas" />
+      {/* ========================================================= */}
+      {/* LAYER 1: The Background Image (Shrinks behind the text)   */}
+      {/* ========================================================= */}
+      <div
+        className={`absolute inset-0 transition-transform duration-[2500ms] ease-out origin-center ${
+          isAnimating ? "scale-100" : "scale-[1.2]"
+        }`}
+      >
+        {/* We add a sky-blue background color because your lighthouse image has a transparent background */}
+        <div
+          className="w-full h-full bg-sky-100 bg-no-repeat"
+          style={{
+            backgroundImage: lighthouse,
+            /* 'cover' zooms in to fill the screen. If the lighthouse looks too zoomed in, change this to 'contain' */
+            backgroundSize: "cover", 
+            backgroundPosition: "center 20%", 
+          }}
+        />
       </div>
 
-      <div className="hero-features-overlay">
-        <motion.div className="hero-feature-text" style={{ opacity: opacity1, y: y1, top: '35%' }}>
-          <h2>Unprecedented Power.</h2>
-          <p>Every interaction feels instantly responsive, fluid, and brilliantly alive.</p>
-        </motion.div>
+      {/* ========================================================= */}
+      {/* LAYER 2: The SVG Mask (Fades in to create the text hole)  */}
+      {/* ========================================================= */}
+      <svg
+        className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-[2000ms] ease-in-out ${
+          isAnimating ? "opacity-100" : "opacity-0"
+        }`}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          <mask id="text-mask">
+            {/* White area: Means the overlay will be VISIBLE here */}
+            <rect width="100%" height="100%" fill="white" />
+            
+            {/* Black area: Means the overlay will be TRANSPARENT here (the cutout) */}
+            <text
+              x="50%"
+              y="48%"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              fill="black"
+              className="font-black"
+              style={{
+                fontSize: "18vw", // Scales dynamically with screen width
+                fontFamily: "system-ui, sans-serif",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              KERIVA
+            </text>
+            
+            {/* Optional sub-text cutout, similar to the "Real Estate" text in the video */}
+            <text
+              x="50%"
+              y="68%"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              fill="black"
+              className="font-light uppercase"
+              style={{
+                fontSize: "3vw",
+                fontFamily: "system-ui, sans-serif",
+                letterSpacing: "0.3em",
+              }}
+            >
+              Project
+            </text>
+          </mask>
+        </defs>
 
-        <motion.div className="hero-feature-text right" style={{ opacity: opacity2, y: y2, top: '45%' }}>
-          <h2>Flawless Design.</h2>
-          <p>Crafted to perfection. Smooth imagery intertwined with motion.</p>
-        </motion.div>
+        {/* The solid white overlay covering everything EXCEPT the text mask */}
+        <rect width="100%" height="100%" fill="white" mask="url(#text-mask)" />
+      </svg>
 
-        <motion.div className="hero-feature-text center" style={{ opacity: opacity3, y: y3, top: '55%' }}>
-          <h2>The future is here.</h2>
-          <p>Explore the unbelievable limits of tomorrow.</p>
-        </motion.div>
+      {/* ========================================================= */}
+      {/* LAYER 3: Bottom Clouds/Fog Gradient (Volumetric effect)   */}
+      {/* ========================================================= */}
+      <div
+        className={`absolute bottom-0 left-0 w-full h-1/2 pointer-events-none transition-opacity duration-[3000ms] ease-in-out ${
+          isAnimating ? "opacity-100" : "opacity-0"
+        }`}
+        style={{
+          background: "linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,0.7) 30%, rgba(255,255,255,0) 100%)",
+        }}
+      />
+
+      {/* ========================================================= */}
+      {/* LAYER 4: The Initial Intro Text (Fades out)               */}
+      {/* ========================================================= */}
+      <div
+        className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none transition-opacity duration-1000 ${
+          isAnimating ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <h1 className="text-5xl md:text-7xl font-bold text-slate-800 tracking-tight mb-4 drop-shadow-lg text-center">
+          Find Your Guiding Light
+        </h1>
+        <p className="text-lg md:text-2xl text-slate-800 font-medium drop-shadow-md text-center">
+          Expert navigation. A clear path forward.
+        </p>
       </div>
+
+      {/* Replay Button for development testing */}
+      <button
+        onClick={handleReplay}
+        className="absolute top-4 right-4 z-50 px-4 py-2 bg-slate-100/50 hover:bg-slate-200 text-slate-800 text-sm rounded-full backdrop-blur transition-colors"
+      >
+        Replay Animation
+      </button>
     </div>
   );
-};
-
-export default Hero;
+}

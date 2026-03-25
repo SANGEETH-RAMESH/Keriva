@@ -29,7 +29,6 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
   const [btnPrimaryHover, setBtnPrimaryHover] = useState(false);
   const [btnSecondaryHover, setBtnSecondaryHover] = useState(false);
 
-  // Cycle scenes on a timer
   useEffect(() => {
     sceneTimerRef.current = setInterval(() => {
       setActiveScene(prev => (prev + 1) % SCENES.length);
@@ -53,7 +52,6 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
         .hero-btns { animation: fadeUp 1s cubic-bezier(0.22,1,0.36,1) 0.78s both; }
       `}</style>
 
-      {/* Full-screen hero — no scroll track needed */}
       <div style={{
         position: "relative",
         height: "100vh",
@@ -63,7 +61,6 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
         overflow: "hidden",
       }}>
 
-        {/* Video — autoplay, looping, no scroll scrub */}
         <video
           src={keralaVideo}
           autoPlay
@@ -80,13 +77,11 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
           }}
         />
 
-        {/* Vignette overlay */}
         <div style={{
           position: "absolute", inset: 0, pointerEvents: "none",
           background: "radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.65) 100%)",
         }} />
 
-        {/* Hero text */}
         <div style={{
           position: "absolute",
           top: 0, left: 0, right: 0, bottom: 0,
@@ -160,7 +155,6 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
           </div>
         </div>
 
-        {/* Scene captions */}
         {SCENES.map((s, i) => (
           <div key={i} style={{
             position: "absolute", bottom: "10vh", left: "56px", zIndex: 2,
@@ -199,7 +193,6 @@ export default function KeralaLanding({ onStartDesigning, onMenuOpen }) {
           </div>
         ))}
 
-        {/* Scene dots */}
         <div style={{
           position: "absolute", right: "40px", bottom: "90px",
           display: "flex", flexDirection: "column", gap: "12px",

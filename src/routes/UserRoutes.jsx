@@ -11,13 +11,12 @@ import GatewayPage from "../components/User/Gateway/GatewayPage";
 import ExperiencePage from "../components/User/Experience/ExperiencePage";
 import JournalPage from "../components/User/Journal/JournalPage";
 import ContactPage from "../components/User/Contact/ContactPage";
-import { Landing } from "../components/User/Landing/Landing";
-import { Landing1 } from "../components/User/Landing/Landing1";
+import AppLoading from "../components/User/Landing/AppLoading";
 
 export default function UserRoutes() {
   return (
     <>
-      <Route path="/" element={<LandingPage />} />
+      <Route path="/" element={<AppLoading />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

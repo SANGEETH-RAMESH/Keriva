@@ -19,6 +19,9 @@ import AdminPrivateRoute from "../protected-routes/AdminPrivateRoute";
 import AdminLanding from "../components/Admin/Landing/AdminLanding";
 import AddLandingSlide from "../components/Admin/Landing/AddLanding";
 import EditLandingSlide from "../components/Admin/Landing/EditLanding";
+import AdminReview from "../components/Admin/Review/AdminReview";
+import AddReview from "../components/Admin/Review/AddReview";
+import EditReview from "../components/Admin/Review/EditReview";
 
 export default function AdminRoutes() {
   return (
@@ -47,6 +50,9 @@ export default function AdminRoutes() {
           <Route path="landing" element={<AdminLanding />} />
           <Route path="add-landing" element={<AddLandingSlide />} />
           <Route path="edit-landing/:id" element={<EditLandingSlide />} />
+          <Route path="review" element={<AdminReview/>}/>
+          <Route path="add-review" element={<AddReview/>}/>
+          <Route path="edit-review/:id" element={<EditReview/>}/>
         </Route>
       </Route>
     </>

@@ -26,7 +26,7 @@ const ScrollVideoSection = ({ onProgressChange }) => {
       const total = sectionH - vh;
       const raw = Math.min(Math.max(scrolled / total, 0), 1);
       setScrollProgress(raw);
-      onProgressChange?.(raw); 
+      onProgressChange?.(raw);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
@@ -39,37 +39,78 @@ const ScrollVideoSection = ({ onProgressChange }) => {
   const p = ease(scrollProgress);
   const { vw, vh } = dims;
 
+  const isMobile = vw < 768;
+  const isTablet = vw >= 768 && vw < 1024;
+
   const textOpacity   = Math.max(0, 1 - p / 0.4);
   const textTranslate = p * 40;
 
-  // ── Natural (start) state ──────────────────────────────────────────
-  // Video sits on the RIGHT side, but is defined by its CENTER so both
-  // edges can expand symmetrically.
-  const padH       = vw * 0.06;
-  const naturalW   = vw * 0.58;
-  const naturalH   = naturalW * (10 / 16);
+  // ── Responsive natural (start) state ──────────────────────────────
+  let naturalW, naturalH, naturalCenterX, naturalCenterY;
 
-  // Place it flush-right with 6vw padding — same visual as before
-  const naturalRight  = vw - padH;              // right edge start
-  const naturalLeft   = naturalRight - naturalW; // left edge start
-  const naturalCenterX = (naturalLeft + naturalRight) / 2; // center X of video
-
-  const naturalTop    = (vh - naturalH) / 2;
-  const naturalCenterY = naturalTop + naturalH / 2; // center Y of video
+  if (isMobile) {
+    // On mobile: video sits centered in bottom 55% of screen
+    const padV = vh * 0.08;
+    naturalW = vw * 0.88;
+    naturalH = naturalW * (9 / 16); // portrait-friendly ratio
+    naturalCenterX = vw / 2;
+    // Position in bottom portion to leave room for text above
+    naturalCenterY = vh * 0.68;
+  } else if (isTablet) {
+    // On tablet: video on right but wider
+    const padH = vw * 0.04;
+    naturalW = vw * 0.62;
+    naturalH = naturalW * (10 / 16);
+    const naturalRight  = vw - padH;
+    const naturalLeft   = naturalRight - naturalW;
+    naturalCenterX = (naturalLeft + naturalRight) / 2;
+    naturalCenterY = vh / 2;
+  } else {
+    // Desktop: original behaviour
+    const padH = vw * 0.06;
+    naturalW = vw * 0.58;
+    naturalH = naturalW * (10 / 16);
+    const naturalRight  = vw - padH;
+    const naturalLeft   = naturalRight - naturalW;
+    naturalCenterX = (naturalLeft + naturalRight) / 2;
+    naturalCenterY = vh / 2;
+  }
 
   // ── Animated state ────────────────────────────────────────────────
-  // Both edges expand outward from the video's own center point.
-  // Target center stays fixed at naturalCenterX during expansion,
-  // then we also slide it to vw/2 so it ends up perfectly centered fullscreen.
   const targetCenterX = naturalCenterX + (vw / 2 - naturalCenterX) * p;
-  
-  const targetCenterY = vh / 2; // keep vertically centered always
+  const targetCenterY = isMobile
+    ? naturalCenterY + (vh / 2 - naturalCenterY) * p
+    : vh / 2;
 
   const frameWidth  = naturalW + (vw - naturalW) * p;
   const frameHeight = naturalH + (vh - naturalH) * p;
 
   const frameLeft = targetCenterX - frameWidth  / 2;
   const frameTop  = targetCenterY - frameHeight / 2;
+
+  // ── Text positioning ──────────────────────────────────────────────
+  const textStyle = isMobile
+    ? {
+        position: "absolute",
+        top: "8vh",
+        left: "50%",
+        transform: `translateX(-50%) translateY(${textTranslate}px)`,
+        width: "84vw",
+        textAlign: "center",
+        zIndex: 10,
+        pointerEvents: "none",
+        opacity: textOpacity,
+      }
+    : {
+        position: "absolute",
+        top: "50%",
+        left: isTablet ? "4vw" : "6vw",
+        transform: `translateY(calc(-50% + ${textTranslate}px))`,
+        maxWidth: isTablet ? 260 : 340,
+        zIndex: 10,
+        pointerEvents: "none",
+        opacity: textOpacity,
+      };
 
   return (
     <>
@@ -80,9 +121,6 @@ const ScrollVideoSection = ({ onProgressChange }) => {
       `}</style>
 
       <div style={{ background: "#f5f3ef" }}>
-
-        
-
         {/* ── Scroll Video Section ── */}
         <section ref={sectionRef} style={{ position: "relative", height: "300vh" }}>
           <div
@@ -93,23 +131,14 @@ const ScrollVideoSection = ({ onProgressChange }) => {
               overflow: "hidden",
             }}
           >
-            {/* Left overlay text */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "6vw",
-                transform: `translateY(calc(-50% + ${textTranslate}px))`,
-                maxWidth: 340,
-                zIndex: 10,
-                pointerEvents: "none",
-                opacity: textOpacity,
-              }}
-            >
+            {/* Text overlay — top-center on mobile, left-center on desktop */}
+            <div style={textStyle}>
               <p
                 style={{
                   fontFamily: "'DM Serif Display', Georgia, serif",
-                  fontSize: "clamp(18px, 2.2vw, 28px)",
+                  fontSize: isMobile
+                    ? "clamp(16px, 4.5vw, 22px)"
+                    : "clamp(18px, 2.2vw, 28px)",
                   lineHeight: 1.45,
                   fontWeight: 400,
                   color: "#3a3a3a",
@@ -126,7 +155,7 @@ const ScrollVideoSection = ({ onProgressChange }) => {
               </p>
             </div>
 
-            {/* Animated video frame — expands symmetrically from its own center */}
+            {/* Animated video frame */}
             <div
               style={{
                 position: "absolute",
@@ -144,7 +173,12 @@ const ScrollVideoSection = ({ onProgressChange }) => {
                 loop
                 playsInline
                 src={therealkerala}
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
             </div>
           </div>
